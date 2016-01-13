@@ -24,34 +24,35 @@ static void mavlink_test_all(uint8_t system_id, uint8_t component_id, mavlink_me
 #include "../ardupilotmega/testsuite.h"
 
 
-static void mavlink_test_ros_state(uint8_t system_id, uint8_t component_id, mavlink_message_t *last_msg)
+static void mavlink_test_ros_info(uint8_t system_id, uint8_t component_id, mavlink_message_t *last_msg)
 {
 	mavlink_message_t msg;
         uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
         uint16_t i;
-	mavlink_ros_state_t packet_in = {
-		5,72
+	mavlink_ros_info_t packet_in = {
+		5,"BCDEFGHIJKLMNOPQRSTUVWX",144
     };
-	mavlink_ros_state_t packet1, packet2;
+	mavlink_ros_info_t packet1, packet2;
         memset(&packet1, 0, sizeof(packet1));
         	packet1.state = packet_in.state;
         	packet1.node_count = packet_in.node_count;
         
+        	mav_array_memcpy(packet1.host, packet_in.host, sizeof(char)*24);
         
 
         memset(&packet2, 0, sizeof(packet2));
-	mavlink_msg_ros_state_encode(system_id, component_id, &msg, &packet1);
-	mavlink_msg_ros_state_decode(&msg, &packet2);
+	mavlink_msg_ros_info_encode(system_id, component_id, &msg, &packet1);
+	mavlink_msg_ros_info_decode(&msg, &packet2);
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 
         memset(&packet2, 0, sizeof(packet2));
-	mavlink_msg_ros_state_pack(system_id, component_id, &msg , packet1.state , packet1.node_count );
-	mavlink_msg_ros_state_decode(&msg, &packet2);
+	mavlink_msg_ros_info_pack(system_id, component_id, &msg , packet1.state , packet1.host , packet1.node_count );
+	mavlink_msg_ros_info_decode(&msg, &packet2);
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 
         memset(&packet2, 0, sizeof(packet2));
-	mavlink_msg_ros_state_pack_chan(system_id, component_id, MAVLINK_COMM_0, &msg , packet1.state , packet1.node_count );
-	mavlink_msg_ros_state_decode(&msg, &packet2);
+	mavlink_msg_ros_info_pack_chan(system_id, component_id, MAVLINK_COMM_0, &msg , packet1.state , packet1.host , packet1.node_count );
+	mavlink_msg_ros_info_decode(&msg, &packet2);
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 
         memset(&packet2, 0, sizeof(packet2));
@@ -59,12 +60,12 @@ static void mavlink_test_ros_state(uint8_t system_id, uint8_t component_id, mavl
         for (i=0; i<mavlink_msg_get_send_buffer_length(&msg); i++) {
         	comm_send_ch(MAVLINK_COMM_0, buffer[i]);
         }
-	mavlink_msg_ros_state_decode(last_msg, &packet2);
+	mavlink_msg_ros_info_decode(last_msg, &packet2);
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
         
         memset(&packet2, 0, sizeof(packet2));
-	mavlink_msg_ros_state_send(MAVLINK_COMM_1 , packet1.state , packet1.node_count );
-	mavlink_msg_ros_state_decode(last_msg, &packet2);
+	mavlink_msg_ros_info_send(MAVLINK_COMM_1 , packet1.state , packet1.host , packet1.node_count );
+	mavlink_msg_ros_info_decode(last_msg, &packet2);
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 }
 
@@ -160,7 +161,7 @@ static void mavlink_test_rpg_svo_info(uint8_t system_id, uint8_t component_id, m
 
 static void mavlink_test_ros(uint8_t system_id, uint8_t component_id, mavlink_message_t *last_msg)
 {
-	mavlink_test_ros_state(system_id, component_id, last_msg);
+	mavlink_test_ros_info(system_id, component_id, last_msg);
 	mavlink_test_ros_node_state(system_id, component_id, last_msg);
 	mavlink_test_rpg_svo_info(system_id, component_id, last_msg);
 }
